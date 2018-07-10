@@ -31,13 +31,17 @@ with open(subj_list_file) as f:
     Subj_names = f.read().splitlines()
 
 # Creating the final output matrix
-final_output = np.strarray((2, 20))
-final_output[:] = 'aaaaa'
+#final_output = np.strarray((2, 20))
+final_output = np.array(range(40), dtype='a50').reshape(20,2)
+final_output[:] = 'aaaaa1'
+final_output[0][0] = "HELLO"
 vals = np.array(ROI_names)
+print(final_output)
+
 
 for ii in range(0,19):
-    #final_output[0][ii] = vals[ii].tostring()
-    final_output[0][ii] = 'nblahh'
+    final_output[ii][0] = vals[ii].tostring()
+    #final_output[0][ii] = 'nblahh'
     #final_output[0][ii] = vals.tostring()
 
 print(type(vals[0].tostring()))
@@ -45,26 +49,6 @@ print(vals[0].tostring())
 print(final_output)
 exit()
 
-print(final_output)
-# making everything equal to 'a' so se can see if there are any errors
-
-print(final_output)
-
-
-
-print(vals)
-print(type(vals))
-print(vals[0][1])
-print(type(final_output))
-print(vals.shape)
-print(final_output.shape)
-
-print(final_output)
-final_output[0][:] = vals[:]
-print('blah')
-print(final_output)
-print(vals[0])
-exit()
 
 # loop though subjects
 for subj in Subj_names:
