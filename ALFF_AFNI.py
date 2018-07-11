@@ -1,10 +1,11 @@
-import sys
-import commands
+#import sys
 import os
 import numpy as np
 import csv
+import subprocess
 
-
+# NOTE:
+# Missing functional data from SZ5014A and SZ5016A
 
 base_folder = '/Users/afranco/TEMP/FALFF_GOFF'
 mask = '/usr/local/fsl/data/standard/MNI152lin_T1_2mm_brain_mask.nii.gz'
@@ -13,9 +14,10 @@ filename = 'proc_nosmooth_norm'
 ROI_loc = '/Users/afranco/TEMP/FALFF_GOFF/ROIS/'
 roi_names_file = '/Users/afranco/TEMP/FALFF_GOFF/SCRIPTS/FALFF_GOFF/Hipp_ROIs.txt'
 output_folder = '/Users/afranco/TEMP/FALFF_GOFF/output/'
-output_temp = output_folder + "temp.txt"
+output_file_ALFF = output_folder + "output_ALFF.csv"
+output_file_fALFF = output_folder + "output_fALFF.csv"
 
-subj_list_file = '/Users/afranco/TEMP/FALFF_GOFF/SCRIPTS/FALFF_GOFF/subj_list_test.txt'
+subj_list_file = '/Users/afranco/TEMP/FALFF_GOFF/SCRIPTS/FALFF_GOFF/subj_list.txt'
 
 # Filters for F/ALFF
 fbot = '0.01'
@@ -25,99 +27,90 @@ ftop = '0.1'
 # reading list of ROI names
 with open(roi_names_file) as f:
     ROI_names = f.read().splitlines()
+# Get number of rois
+num_rois = len(ROI_names)
 
 # Read the list of subj names
 with open(subj_list_file) as f:
     Subj_names = f.read().splitlines()
+# Get number of subjects
+num_subjs = len(Subj_names)
 
 # Creating the final output matrix
-#final_output = np.strarray((2, 20))
-final_output = np.array(range(40), dtype='a50').reshape(20,2)
-final_output[:] = 'aaaaa1'
-final_output[0][0] = "HELLO"
-vals = np.array(ROI_names)
-print(final_output)
+# Note adding an extra row and column to have headers
+final_output_ALFF = np.array(range((num_rois+1)*(num_subjs+1)), dtype='a30').reshape((num_subjs+1), (num_rois+1))
+final_output_ALFF[:] = 'aaaaa1'
+final_output_ALFF[0][0] = "subject - ROI"
 
+# Putting ROI names on the table
+name = np.array(ROI_names)
+for ii in range(0, num_rois):
+    final_output_ALFF[0][ii+1] = name[ii].tostring()
 
-for ii in range(0,19):
-    final_output[ii][0] = vals[ii].tostring()
-    #final_output[0][ii] = 'nblahh'
-    #final_output[0][ii] = vals.tostring()
+# Putting subject names on the table
+for ii in range(0, num_subjs):
+    final_output_ALFF[ii+1][0] = Subj_names[ii]
 
-print(type(vals[0].tostring()))
-print(vals[0].tostring())
-print(final_output)
-
-
+# Reusing the same template
+final_output_fALFF = np.copy(final_output_ALFF)
 
 # loop though subjects
+ii_subj = 1
 for subj in Subj_names:
-
     # Go to base folder
     os.chdir(base_folder)
     # go to subject folder
     os.chdir(subj)
-    print(os.system('ls'))
 
     # command to run
-    run ="'\\bin\\bash' 3dRSFC " + "-mask " + mask + " -band " + fbot + " " + ftop + " -prefix " + subj + " -input " + filename + ".nii.gz"
+    run = ("3dRSFC " + "-mask " + mask + " -band " + fbot + " " + ftop + " -prefix " + subj + " -input " +
+           filename + ".nii.gz")
     print("command: ")
     print(run)
     os.system(run)
-    exit()
+
     # Going to extract the F/ALFF from the data
     # loop through ROIs
+    ii_roi = 1
     for roi_name in ROI_names:
         # command to run
         roi = ROI_loc + roi_name
 
         # ALFF
-        run = "3dROIstats  -quiet -mask " + roi + "_mask.nii.gz " + subj + "_ALFF+tlrc.HEAD > " + output_temp
+        run = "3dROIstats  -quiet -mask " + roi + "_mask.nii.gz " + subj + "_ALFF+tlrc.HEAD "
         print(run)
-        os.system(run)
-
-
-        #SZ5011A_ALFF + tlrc.BRIK
-        #SZ5011A_fALFF + tlrc.BRIK
-
-
-#import numpy
-#a = numpy.asarray([ [1,2,3], [4,5,6], [7,8,9] ])
-#numpy.savetxt("foo.csv", a, delimiter=",")
+        # running 3droistats and getting the score
+        score = subprocess.check_output(run, shell=True).rstrip('\n').lstrip('\t')
+        print("score =" + score)
+        final_output_ALFF[ii_subj][ii_roi] = score
+        print(score)
 
 
 
-import numpy
-a = numpy.asarray([ [1,2,3], [4,5,6], [7,8,9] ])
-numpy.savetxt("foo.csv", a, delimiter=",")
+        # fALFF
+        run = "3dROIstats  -quiet -mask " + roi + "_mask.nii.gz " + subj + "_fALFF+tlrc.HEAD "
+        print(run)
+        # running 3droistats and getting the score
+        score = subprocess.check_output(run, shell=True).rstrip('\n').lstrip('\t')
+        final_output_fALFF[ii_subj][ii_roi] = score
 
-exit()
 
 
-#!!!ROI = '/Users/afranco/TEMP/DON/Group1_thresh_zstat0010_LeftPost_mask.nii.gz'
-output = '/Users/afranco/TEMP/DON/ALFF_Group1_RightPost.txt'
+        print("ii_rois = " + str(ii_roi))
+        ii_roi = ii_roi + 1
 
-# go to base folder
-os.chdir(base_folder)
-os.system('ls')
-os.chdir(subj)
-os.system('ls')
 
-# run afni 3drsfc
-fbot = '0.01'
-ftop = '0.1'
-run = "3dRSFC " + "-mask " + mask + " -band " + fbot + " " + ftop + " -prefix " + filename + " -input " + filename + ".nii.gz"
-print("command:")
-print(run)
 
-#os.system(run)
 
-# now extract the score inside the ROI
-# get ALFF
-run = "3dROIstats  -quiet -mask " + mask + " " + "proc_nosmooth_norm_ALFF+tlrc.HEAD > " + output
-print("command:")
-print(run)
-os.system(run)
-#3dROIstats -mask mask+orig. 'func_slim+orig[1,3,5]'
+    print("ii_subj = " + str(ii_subj))
+    ii_subj = ii_subj + 1
+
+print(final_output_ALFF)
+print(final_output_fALFF)
+# saving output as csv
+with open(output_file_ALFF, 'wb') as f:
+    csv.writer(f).writerows(final_output_ALFF)
+with open(output_file_fALFF, 'wb') as f:
+    csv.writer(f).writerows(final_output_fALFF)
 
 exit()
