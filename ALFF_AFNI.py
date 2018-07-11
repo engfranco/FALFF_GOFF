@@ -47,7 +47,7 @@ for ii in range(0,19):
 print(type(vals[0].tostring()))
 print(vals[0].tostring())
 print(final_output)
-exit()
+
 
 
 # loop though subjects
@@ -57,13 +57,14 @@ for subj in Subj_names:
     os.chdir(base_folder)
     # go to subject folder
     os.chdir(subj)
+    print(os.system('ls'))
 
     # command to run
-    run ="3dRSFC " + "-mask " + mask + " -band " + fbot + " " + ftop + " -prefix " + subj + " -input " + filename + ".nii.gz"
-    print("command:")
+    run ="'\\bin\\bash' 3dRSFC " + "-mask " + mask + " -band " + fbot + " " + ftop + " -prefix " + subj + " -input " + filename + ".nii.gz"
+    print("command: ")
     print(run)
-    #os.system(run)
-
+    os.system(run)
+    exit()
     # Going to extract the F/ALFF from the data
     # loop through ROIs
     for roi_name in ROI_names:
