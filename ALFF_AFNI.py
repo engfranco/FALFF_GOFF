@@ -1,4 +1,3 @@
-#import sys
 import os
 import numpy as np
 import csv
@@ -39,7 +38,8 @@ num_subjs = len(Subj_names)
 # Creating the final output matrix
 # Note adding an extra row and column to have headers
 final_output_ALFF = np.array(range((num_rois+1)*(num_subjs+1)), dtype='a30').reshape((num_subjs+1), (num_rois+1))
-final_output_ALFF[:] = 'aaaaa1'
+# just a filler of the array
+final_output_ALFF[:] = 'aa'
 final_output_ALFF[0][0] = "subject - ROI"
 
 # Putting ROI names on the table
@@ -85,8 +85,6 @@ for subj in Subj_names:
         final_output_ALFF[ii_subj][ii_roi] = score
         print(score)
 
-
-
         # fALFF
         run = "3dROIstats  -quiet -mask " + roi + "_mask.nii.gz " + subj + "_fALFF+tlrc.HEAD "
         print(run)
@@ -95,12 +93,8 @@ for subj in Subj_names:
         final_output_fALFF[ii_subj][ii_roi] = score
 
 
-
         print("ii_rois = " + str(ii_roi))
         ii_roi = ii_roi + 1
-
-
-
 
     print("ii_subj = " + str(ii_subj))
     ii_subj = ii_subj + 1
