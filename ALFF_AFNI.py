@@ -69,6 +69,46 @@ for subj in Subj_names:
     print(run)
     os.system(run)
 
+
+    # ALFF
+    # Convert ALFF score to z-score
+    # calculate summary stats within brain mask
+    ALFF_FileName = subj + "_ALFF+tlrc.HEAD"
+    run = "3dBrickStat -mean -mask " + mask + " " + ALFF_FileName
+    dset_mean = subprocess.check_output(run, shell=True).rstrip('\n').lstrip('\t')
+    run = "3dBrickStat -stdev -mask " + mask + " " + ALFF_FileName
+    dset_stdev = subprocess.check_output(run, shell=True).rstrip('\n').lstrip('\t')
+
+    print("The mean ALFF of values within the mask is: " + dset_mean + " for subject: " + subj)
+    print("The stdev ALFF of values within the mask is: " + dset_stdev + " for subject: " + subj)
+
+    # Now calculate the z-score
+    run = "3dcalc -a " + ALFF_FileName + " -b " + mask + " -expr 'step(b)*(a - " + dset_mean + \
+          ") / (" + dset_stdev + ")' -prefix " + subj + "_ALFF_Z_Score+tlrc.HEAD "
+    print(run)
+    os.system(run)
+
+    # fALFF
+    # Convert fALFF score to z-score
+    # calculate summary stats within brain mask
+    fALFF_FileName = subj + "_fALFF+tlrc.HEAD"
+    run = "3dBrickStat -mean -mask " + mask + " " + fALFF_FileName
+    dset_mean = subprocess.check_output(run, shell=True).rstrip('\n').lstrip('\t')
+    run = "3dBrickStat -stdev -mask " + mask + " " + fALFF_FileName
+    dset_stdev = subprocess.check_output(run, shell=True).rstrip('\n').lstrip('\t')
+
+    print("The mean fALFF of values within the mask is: " + dset_mean + " for subject: " + subj)
+    print("The stdev fALFF of values within the mask is: " + dset_stdev + " for subject: " + subj)
+
+    # Now calculate the z-score
+    run = "3dcalc -a " + fALFF_FileName + " -b " + mask + " -expr 'step(b)*(a - " + dset_mean + \
+          ") / (" + dset_stdev + ")' -prefix " + subj + "_fALFF_Z_Score+tlrc.HEAD "
+    print(run)
+    os.system(run)
+
+
+
+
     # Going to extract the F/ALFF from the data
     # loop through ROIs
     ii_roi = 1
@@ -76,21 +116,21 @@ for subj in Subj_names:
         # command to run
         roi = ROI_loc + roi_name
 
-        # ALFF
-        run = "3dROIstats  -quiet -mask " + roi + "_mask.nii.gz " + subj + "_ALFF+tlrc.HEAD "
+        ### ALFF
+        # running 3droistats and getting the z-score
+        run = "3dROIstats  -quiet -mask " + roi + "_mask.nii.gz " + subj + "_ALFF_Z_Score+tlrc.HEAD "
         print(run)
-        # running 3droistats and getting the score
-        score = subprocess.check_output(run, shell=True).rstrip('\n').lstrip('\t')
-        print("score =" + score)
-        final_output_ALFF[ii_subj][ii_roi] = score
-        print(score)
+        z_score = subprocess.check_output(run, shell=True).rstrip('\n').lstrip('\t')
+        print("z-score = " + z_score)
+        final_output_ALFF[ii_subj][ii_roi] = z_score
 
-        # fALFF
+
+        ### fALFF
         run = "3dROIstats  -quiet -mask " + roi + "_mask.nii.gz " + subj + "_fALFF+tlrc.HEAD "
         print(run)
         # running 3droistats and getting the score
-        score = subprocess.check_output(run, shell=True).rstrip('\n').lstrip('\t')
-        final_output_fALFF[ii_subj][ii_roi] = score
+        z_score = subprocess.check_output(run, shell=True).rstrip('\n').lstrip('\t')
+        final_output_fALFF[ii_subj][ii_roi] = z_score
 
 
         print("ii_rois = " + str(ii_roi))
